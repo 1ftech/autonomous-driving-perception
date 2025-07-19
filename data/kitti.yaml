@@ -1,0 +1,17 @@
+# data/kitti.yaml
+path: ../data  # Root path (relative to train.py)
+train: images/train  # Training images path
+val: images/val      # Validation images path
+
+# Class names and IDs (must match your label conversion)
+names:
+  0: pedestrian
+  1: cyclist
+  2: car
+  7: tram
+
+# Data augmentation (optional but recommended)
+augmentation:
+  hsv_h: 0.015  # Hue adjustment
+  hsv_s: 0.7    # Saturation adjustment
+  flipud: 0.5   # 50% chance of vertical flip

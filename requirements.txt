@@ -1,0 +1,7 @@
+
+ultralytics>=8.0.0  # For YOLOv8
+opencv-python>=4.5.0  # For image processing
+numpy>=1.20.0  # For data handling
+matplotlib>=3.4.0  # For visualization
+lxml>=4.6.0  # For parsing KITTI's XML labels
+tqdm>=4.60.0  # Progress bars
