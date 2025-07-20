@@ -1,34 +1,64 @@
-# Converts KITTI's tracklet_labels.xml → YOLO .txt files
 import os
 import xml.etree.ElementTree as ET
+from tqdm import tqdm
+import argparse
 
-def parse_kitti_labels(xml_path, output_dir, img_width=1242, img_height=375):
+def convert_kitti_to_yolo(xml_path, output_dir, img_width=1242, img_height=375):
+    """Convert KITTI annotation to YOLO format"""
     tree = ET.parse(xml_path)
     root = tree.getroot()
     
-    for frame in root.findall('.//frame'):
-        frame_id = int(frame.attrib['id'])
-        with open(f"{output_dir}/{frame_id:06d}.txt", 'w') as f:
-            for obj in frame.findall('.//object'):
-                class_name = obj.find('type').text
-                bbox = obj.find('.//bbox2D')
-                x1 = float(bbox.find('x1').text)
-                y1 = float(bbox.find('y1').text)
-                x2 = float(bbox.find('x2').text)
-                y2 = float(bbox.find('y2').text)
-                
-                # Convert to YOLO format
-                cx = (x1 + x2) / 2 / img_width
-                cy = (y1 + y2) / 2 / img_height
-                w = (x2 - x1) / img_width
-                h = (y2 - y1) / img_height
-                
-                class_id = {"Car": 2, "Cyclist": 1, "Tram": 3}.get(class_name, -1)
-                if class_id != -1:
-                    f.write(f"{class_id} {cx:.6f} {cy:.6f} {w:.6f} {h:.6f}\n")
+    frame_id = os.path.splitext(os.path.basename(xml_path))[0]
+    output_path = os.path.join(output_dir, f"{frame_id}.txt")
+    
+    with open(output_path, 'w') as f:
+        for obj in root.findall('.//object'):
+            class_name = obj.find('type').text
+            bbox = obj.find('.//bndbox')
+            xmin = float(bbox.find('xmin').text)
+            ymin = float(bbox.find('ymin').text)
+            xmax = float(bbox.find('xmax').text)
+            ymax = float(bbox.find('ymax').text)
+            
+            # Convert to YOLO format
+            x_center = (xmin + xmax) / 2 / img_width
+            y_center = (ymin + ymax) / 2 / img_height
+            width = (xmax - xmin) / img_width
+            height = (ymax - ymin) / img_height
+            
+            # Class mapping (adjust as needed)
+            class_id = {
+                "Pedestrian": 0,
+                "Cyclist": 1,
+                "Car": 2,
+                "Tram": 3
+            }.get(class_name, -1)
+            
+            if class_id != -1:
+                f.write(f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}\n")
 
-# Usage
-parse_kitti_labels(
-    xml_path="data/kitti/2011_09_26/2011_09_26_drive_0001_sync/tracklet_labels.xml",
-    output_dir="data/labels"
+def process_dataset(xml_dir, output_dir):
+    """Process all XML files in a directory"""
+    os.makedirs(output_dir, exist_ok=True)
+    xml_files = [f for f in os.listdir(xml_dir) if f.endswith('.xml')]
+    
+    for xml_file in tqdm(xml_files, desc=f"Processing {os.path.basename(xml_dir)}"):
+        convert_kitti_to_yolo(
+            os.path.join(xml_dir, xml_file),
+            output_dir
+        )
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--kitti_root', type=str, required=True, 
+                       help='Root directory of KITTI dataset')
+    parser.add_argument('--output_root', type=str, required=True,
+                       help='Root output directory for YOLO labels')
+    args = parser.parse_args()
+
+    # Process both train and val sets
+    for split in ['train', 'val']:
+        xml_dir = os.path.join(args.kitti_root, 'tracklet_labels', split)
+        output_dir = os.path.join(args.output_root, split)
+        process_dataset(xml_dir, output_dir)
 )
