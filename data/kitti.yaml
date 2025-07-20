@@ -8,7 +8,7 @@ names:
   0: pedestrian
   1: cyclist
   2: car
-  7: tram
+  3: tram
 
 # Data augmentation (optional but recommended)
 augmentation:

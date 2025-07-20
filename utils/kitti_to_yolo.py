@@ -23,7 +23,7 @@ def parse_kitti_labels(xml_path, output_dir, img_width=1242, img_height=375):
                 w = (x2 - x1) / img_width
                 h = (y2 - y1) / img_height
                 
-                class_id = {"Car": 2, "Cyclist": 1, "Tram": 7}.get(class_name, -1)
+                class_id = {"Car": 2, "Cyclist": 1, "Tram": 3}.get(class_name, -1)
                 if class_id != -1:
                     f.write(f"{class_id} {cx:.6f} {cy:.6f} {w:.6f} {h:.6f}\n")
 
